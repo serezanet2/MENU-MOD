@@ -2,12 +2,12 @@ local player = game:GetService("Players").LocalPlayer
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
--- Конфигурация (замените на свои реальные URL)
+-- Конфигурация
 local API_URL = "https://serezanet2.github.io/GitUnlock/Gitmoder/?check="
 local MAIN_SCRIPT_URL = "https://raw.githubusercontent.com/serezanet2/serezanet2-GIT-SALLI/main/script.lua"
 local PROFILE_LINK = "https://serezanet2.github.io/GitUnlock/"
 
--- Создание интерфейса
+-- Восстановление оригинального интерфейса
 local gui = Instance.new("ScreenGui")
 gui.Name = "AuthGUI"
 gui.Parent = game:GetService("CoreGui")
@@ -17,121 +17,230 @@ gui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 500, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.Position = UDim2.new(0.5, -250, 0, -350)
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
 mainFrame.Parent = gui
 
--- Градиентный фон
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 80, 80))
 })
 gradient.Rotation = 90
 gradient.Parent = mainFrame
 
--- Элементы интерфейса
-local elements = {
-    menuText = {
-        Type = "TextLabel",
-        Props = {
-            Size = UDim2.new(0, 120, 0, 20),
-            Position = UDim2.new(1, -130, 0, 10),
-            Text = "Gitmoder",
-            TextColor3 = Color3.fromRGB(200, 200, 200),
-            TextXAlignment = Enum.TextXAlignment.Right,
-            BackgroundTransparency = 1,
-            Font = Enum.Font.GothamBold,
-            TextSize = 14
-        }
-    },
-    -- [Остальные элементы интерфейса...]
-}
+-- Восстановленные элементы интерфейса
+local menuText = Instance.new("TextLabel")
+menuText.Size = UDim2.new(0, 120, 0, 20)
+menuText.Position = UDim2.new(1, -130, 0, 10)
+menuText.Text = "Gitmoder"
+menuText.TextColor3 = Color3.fromRGB(200, 200, 200)
+menuText.TextXAlignment = Enum.TextXAlignment.Right
+menuText.BackgroundTransparency = 1
+menuText.Font = Enum.Font.GothamBold
+menuText.TextSize = 14
+menuText.Parent = mainFrame
 
--- Создаем элементы интерфейса
-for name, config in pairs(elements) do
-    local element = Instance.new(config.Type)
-    for prop, value in pairs(config.Props) do
-        element[prop] = value
-    end
-    element.Parent = mainFrame
-    elements[name] = element
+local creditText = Instance.new("TextLabel")
+creditText.Size = UDim2.new(0, 150, 0, 20)
+creditText.Position = UDim2.new(1, -160, 1, -30)
+creditText.Text = "By salli_system"
+creditText.TextColor3 = Color3.fromRGB(150, 150, 150)
+creditText.TextXAlignment = Enum.TextXAlignment.Right
+creditText.BackgroundTransparency = 1
+creditText.Font = Enum.Font.Gotham
+creditText.TextSize = 12
+creditText.Parent = mainFrame
+
+local passwordText = Instance.new("TextLabel")
+passwordText.Name = "PasswordText"
+passwordText.Size = UDim2.new(1, -40, 0, 50)
+passwordText.Position = UDim2.new(0, 20, 0.3, -25)
+passwordText.Text = "ВВЕДИТЕ КЛЮЧ ДОСТУПА"
+passwordText.TextColor3 = Color3.fromRGB(255, 255, 255)
+passwordText.TextXAlignment = Enum.TextXAlignment.Center
+passwordText.BackgroundTransparency = 1
+passwordText.Font = Enum.Font.GothamBold
+passwordText.TextSize = 18
+passwordText.Parent = mainFrame
+
+local textBox = Instance.new("TextBox")
+textBox.Name = "KeyInput"
+textBox.Size = UDim2.new(0, 300, 0, 40)
+textBox.Position = UDim2.new(0.5, -150, 0.45, -20)
+textBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textBox.PlaceholderText = "Введите ключ..."
+textBox.Font = Enum.Font.Gotham
+textBox.TextSize = 16
+textBox.Text = ""
+textBox.Parent = mainFrame
+
+local submitBtn = Instance.new("TextButton")
+submitBtn.Name = "SubmitBtn"
+submitBtn.Size = UDim2.new(0, 140, 0, 35)
+submitBtn.Position = UDim2.new(0.3, -70, 0.65, 0)
+submitBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+submitBtn.Text = "ПОДТВЕРДИТЬ"
+submitBtn.Font = Enum.Font.GothamBold
+submitBtn.TextSize = 14
+submitBtn.Parent = mainFrame
+
+local copyBtn = Instance.new("TextButton")
+copyBtn.Name = "CopyBtn"
+copyBtn.Size = UDim2.new(0, 140, 0, 35)
+copyBtn.Position = UDim2.new(0.7, -70, 0.65, 0)
+copyBtn.Text = "Скопировать GitUnlock"
+copyBtn.Font = Enum.Font.GothamBold
+copyBtn.TextSize = 12
+copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+copyBtn.BackgroundColor3 = Color3.fromRGB(40, 0, 60)
+copyBtn.Parent = mainFrame
+
+local btnGradient = Instance.new("UIGradient")
+btnGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 0, 150)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 0, 100))
+})
+btnGradient.Rotation = 90
+btnGradient.Parent = copyBtn
+
+local statusText = Instance.new("TextLabel")
+statusText.Name = "StatusText"
+statusText.Size = UDim2.new(1, -40, 0, 30)
+statusText.Position = UDim2.new(0, 20, 0.85, 0)
+statusText.Text = ""
+statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusText.TextXAlignment = Enum.TextXAlignment.Center
+statusText.BackgroundTransparency = 1
+statusText.Font = Enum.Font.Gotham
+statusText.TextSize = 14
+statusText.Parent = mainFrame
+
+-- Анимации (оригинальные)
+local function tween(obj, props, duration, easingStyle, easingDirection)
+    local tweenInfo = TweenInfo.new(duration, easingStyle or Enum.EasingStyle.Quad, easingDirection or Enum.EasingDirection.Out)
+    local tween = TweenService:Create(obj, tweenInfo, props)
+    tween:Play()
+    return tween
 end
 
--- Улучшенная проверка ключа
+local function initialAnimation()
+    tween(mainFrame, {
+        Position = UDim2.new(0.5, -250, 0.5, -150)
+    }, 1.2, Enum.EasingStyle.Bounce)
+end
+
+local function successAnimation(callback)
+    submitBtn.Active = false
+    submitBtn.Text = "✓ УСПЕШНО"
+    tween(submitBtn, {
+        BackgroundTransparency = 0.7,
+        TextTransparency = 0.3,
+        BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    }, 0.3)
+
+    passwordText.Text = "ДОСТУП РАЗРЕШЕН!"
+    passwordText.TextColor3 = Color3.fromRGB(0, 255, 0)
+
+    tween(mainFrame, {
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0)
+    }, 1, Enum.EasingStyle.Quint)
+
+    tween(menuText, {
+        Position = UDim2.new(1, -20, 0, 20),
+        TextSize = 18
+    }, 0.5)
+    
+    tween(creditText, {
+        Position = UDim2.new(1, -20, 1, -30),
+        TextSize = 16
+    }, 0.5)
+
+    task.wait(1)
+    if callback then callback() end
+end
+
+-- Улучшенная проверка ключа с защитой
 local function validateKey(key)
-    -- Локальная проверка формата
-    if not key or #key < 10 then return false end
+    key = string.gsub(tostring(key or ""), "%s+", "")
+    if #key < 5 then return false end
     
-    -- Проверка кэша
-    if _G.KeyCache and _G.KeyCache[key] ~= nil then
-        return _G.KeyCache[key]
-    end
-
     local success, result = pcall(function()
-        if not HttpService:IsHttpGetEnabled() then
-            error("HTTP-запросы отключены")
-        end
+        if not HttpService:IsHttpGetEnabled() then return false end
+        local response = HttpService:RequestAsync({
+            Url = API_URL..key,
+            Method = "GET"
+        })
+        return HttpService:JSONDecode(response.Body).valid == true
+    end)
+    
+    return success and result
+end
+
+-- Обработчики с защитой
+local function safeConnect(button, callback)
+    local connection
+    connection = button.MouseButton1Click:Connect(function()
+        if not connection.Connected then return end
+        pcall(callback)
+    end)
+    return connection
+end
+
+-- Подключение кнопок
+safeConnect(submitBtn, function()
+    submitBtn.Text = "ПРОВЕРКА..."
+    statusText.Text = ""
+    
+    if validateKey(textBox.Text) then
+        statusText.Text = "Проверка ключа..."
+        statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
         
-        local response = HttpService:JSONDecode(HttpService:GetAsync(API_URL..key, true))
-        return response.valid == true
-    end)
-    
-    -- Кэшируем результат
-    _G.KeyCache = _G.KeyCache or {}
-    _G.KeyCache[key] = success and result or false
-    
-    return _G.KeyCache[key]
-end
-
--- Загрузка основного скрипта
-local function loadMainScript()
-    local success, script = pcall(function()
-        return HttpService:GetAsync(MAIN_SCRIPT_URL, true)
-    end)
-    
-    if success then
-        local loadSuccess, err = pcall(loadstring, script)
-        if not loadSuccess then
-            warn("Ошибка загрузки:", err)
-            return false
-        end
-        return true
+        successAnimation(function()
+            local success, script = pcall(function()
+                return HttpService:GetAsync(MAIN_SCRIPT_URL, true)
+            end)
+            
+            if success then
+                local loadSuccess, err = pcall(loadstring, script)
+                if not loadSuccess then
+                    warn("Ошибка загрузки:", err)
+                    statusText.Text = "Ошибка загрузки!"
+                    statusText.TextColor3 = Color3.fromRGB(255, 50, 50)
+                end
+            else
+                warn("Ошибка получения:", script)
+                statusText.Text = "Ошибка сети!"
+                statusText.TextColor3 = Color3.fromRGB(255, 50, 50)
+            end
+        end)
     else
-        warn("Ошибка получения скрипта:", script)
-        return false
-    end
-end
-
--- Обработчики кнопок
-elements.submitBtn.MouseButton1Click:Connect(function()
-    local key = string.gsub(elements.textBox.Text, "%s+", "")
-    if validateKey(key) then
-        elements.statusText.Text = "Успешная проверка..."
-        if loadMainScript() then
-            gui:Destroy() -- Закрываем интерфейс после успешной загрузки
-        end
-    else
-        elements.statusText.Text = "Неверный ключ!"
+        statusText.Text = "НЕВЕРНЫЙ КЛЮЧ!"
+        statusText.TextColor3 = Color3.fromRGB(255, 50, 50)
         task.wait(1.5)
-        elements.statusText.Text = ""
+        statusText.Text = ""
+        submitBtn.Text = "ПОДТВЕРДИТЬ"
     end
 end)
 
-elements.copyBtn.MouseButton1Click:Connect(function()
-    pcall(function()
+safeConnect(copyBtn, function()
+    local success = pcall(function()
         if game:GetService("ClipboardService") then
             game:GetService("ClipboardService"):Set(PROFILE_LINK)
         else
             setclipboard(PROFILE_LINK)
         end
-        elements.copyBtn.Text = "Скопировано!"
-        task.wait(1.5)
-        elements.copyBtn.Text = "Скопировать GitUnlock"
     end)
+    
+    copyBtn.Text = success and "Скопировано!" or "Ошибка!"
+    task.wait(1.5)
+    copyBtn.Text = "Скопировать GitUnlock"
 end)
 
--- Анимация появления
-tween(mainFrame, {Position = UDim2.new(0.5, -250, 0.5, -150)}, 1.2, Enum.EasingStyle.Bounce)
+-- Запуск
+initialAnimation()

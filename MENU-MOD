@@ -7,39 +7,19 @@ local VALID_KEYS = {
     ["GITMODER-1234"] = true,  -- Тестовый ключ
     ["GIT-ACCESS-5678"] = true -- Основной ключ
 }
-
--- Основной скрипт (встроенный)
-local MAIN_SCRIPT = [[
-    print("Основной скрипт успешно загружен!")
-    -- Ваш основной код здесь
-    -- Пример:
-    local player = game:GetService("Players").LocalPlayer
-    
-    local function notify(msg)
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Gitmoder",
-            Text = msg,
-            Duration = 5
-        })
-    end
-    
-    notify("Система активирована!")
-]]
+local MAIN_SCRIPT_URL = "https://raw.githubusercontent.com/serezanet2/serezanet2-GIT-SALLI/main/script"
 
 -- Создаем интерфейс
 local gui = Instance.new("ScreenGui")
-gui.Name = "AuthGUI_"..tostring(math.random(1000,9999))
+gui.Name = "GitmoderAuth_"..tostring(math.random(1000,9999))
 gui.Parent = game:GetService("CoreGui")
-gui.DisplayOrder = 999999999
-gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 500, 0, 300)
 mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
-mainFrame.ClipsDescendants = true
 mainFrame.Parent = gui
 
 -- Градиентный фон
@@ -51,18 +31,7 @@ gradient.Color = ColorSequence.new({
 gradient.Rotation = 90
 gradient.Parent = mainFrame
 
--- Текст заголовка
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -40, 0, 50)
-title.Position = UDim2.new(0, 20, 0.1, 0)
-title.Text = "GITMODER АКТИВАЦИЯ"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextScaled = true
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.GothamBold
-title.Parent = mainFrame
-
--- Поле ввода ключа
+-- Элементы интерфейса
 local textBox = Instance.new("TextBox")
 textBox.Size = UDim2.new(0, 300, 0, 40)
 textBox.Position = UDim2.new(0.5, -150, 0.4, -20)
@@ -72,7 +41,6 @@ textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 textBox.Parent = mainFrame
 
--- Кнопка активации
 local submitBtn = Instance.new("TextButton")
 submitBtn.Size = UDim2.new(0, 200, 0, 40)
 submitBtn.Position = UDim2.new(0.5, -100, 0.6, 0)
@@ -81,7 +49,6 @@ submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 submitBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 submitBtn.Parent = mainFrame
 
--- Статус
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(1, -40, 0, 30)
 statusLabel.Position = UDim2.new(0, 20, 0.8, 0)
@@ -96,16 +63,28 @@ local function validateKey(key)
     return VALID_KEYS[key] == true
 end
 
--- Загрузка основного скрипта
+-- Загрузка основного скрипта с GitHub
 local function loadMainScript()
-    local success, err = pcall(loadstring, MAIN_SCRIPT)
-    if not success then
-        statusLabel.Text = "Ошибка загрузки!"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        warn("Ошибка загрузки скрипта:", err)
-        return false
+    local success, response = pcall(function()
+        if not HttpService:IsHttpGetEnabled() then
+            error("HTTP запросы отключены")
+        end
+        return HttpService:GetAsync(MAIN_SCRIPT_URL, true)
+    end)
+    
+    if success then
+        local loadSuccess, err = pcall(loadstring, response)
+        if loadSuccess then
+            return true
+        else
+            statusLabel.Text = "Ошибка загрузки скрипта"
+            warn("Ошибка загрузки:", err)
+        end
+    else
+        statusLabel.Text = "Ошибка сети"
+        warn("Ошибка HTTP:", response)
     end
-    return true
+    return false
 end
 
 -- Обработчик кнопки
@@ -121,6 +100,8 @@ submitBtn.MouseButton1Click:Connect(function()
         task.wait(1)
         if loadMainScript() then
             gui:Destroy()
+        else
+            submitBtn.Text = "АКТИВИРОВАТЬ"
         end
     else
         statusLabel.Text = "НЕВЕРНЫЙ КЛЮЧ!"
@@ -136,3 +117,8 @@ mainFrame.Position = UDim2.new(0.5, -250, 0, -300)
 TweenService:Create(mainFrame, TweenInfo.new(1, Enum.EasingStyle.Bounce), {
     Position = UDim2.new(0.5, -250, 0.5, -150)
 }):Play()
+
+-- Уведомление о готовности
+statusLabel.Text = "Система готова к работе"
+task.wait(2)
+statusLabel.Text = ""

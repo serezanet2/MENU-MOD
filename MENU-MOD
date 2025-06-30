@@ -3,13 +3,17 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
 -- Конфигурация
-local VALID_KEYS = {
-    ["GITMODER-1234"] = true,  -- Тестовый ключ
-    ["GIT-ACCESS-5678"] = true -- Основной ключ
+local CONFIG = {
+    API_URL = "https://serezanet2.github.io/GitUnlock/Gitmoder/?check=",
+    MAIN_SCRIPT_URL = "https://raw.githubusercontent.com/serezanet2/serezanet2-GIT-SALLI/main/script",
+    PROFILE_LINK = "https://serezanet2.github.io/GitUnlock/",
+    VALID_KEYS = {
+        ["GITMODER-1234"] = true,  -- Тестовый ключ
+        ["GIT-ACCESS-5678"] = true -- Основной ключ
+    }
 }
-local MAIN_SCRIPT_URL = "https://raw.githubusercontent.com/serezanet2/serezanet2-GIT-SALLI/main/script"
 
--- Создаем интерфейс
+-- Создание интерфейса
 local gui = Instance.new("ScreenGui")
 gui.Name = "GitmoderAuth_"..tostring(math.random(1000,9999))
 gui.Parent = game:GetService("CoreGui")
@@ -20,6 +24,7 @@ mainFrame.Size = UDim2.new(0, 500, 0, 300)
 mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
 mainFrame.Parent = gui
 
 -- Градиентный фон
@@ -31,7 +36,18 @@ gradient.Color = ColorSequence.new({
 gradient.Rotation = 90
 gradient.Parent = mainFrame
 
--- Элементы интерфейса
+-- Текст заголовка
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -40, 0, 50)
+title.Position = UDim2.new(0, 20, 0.1, 0)
+title.Text = "GITMODER АКТИВАЦИЯ"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextScaled = true
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.Parent = mainFrame
+
+-- Поле ввода ключа
 local textBox = Instance.new("TextBox")
 textBox.Size = UDim2.new(0, 300, 0, 40)
 textBox.Position = UDim2.new(0.5, -150, 0.4, -20)
@@ -41,6 +57,7 @@ textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 textBox.Parent = mainFrame
 
+-- Кнопка активации
 local submitBtn = Instance.new("TextButton")
 submitBtn.Size = UDim2.new(0, 200, 0, 40)
 submitBtn.Position = UDim2.new(0.5, -100, 0.6, 0)
@@ -49,6 +66,7 @@ submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 submitBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 submitBtn.Parent = mainFrame
 
+-- Статус
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(1, -40, 0, 30)
 statusLabel.Position = UDim2.new(0, 20, 0.8, 0)
@@ -57,32 +75,51 @@ statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 statusLabel.BackgroundTransparency = 1
 statusLabel.Parent = mainFrame
 
--- Проверка ключа
+-- Проверка ключа (сайт + резерв)
 local function validateKey(key)
     key = string.gsub(tostring(key or ""), "%s+", "")
-    return VALID_KEYS[key] == true
-end
-
--- Загрузка основного скрипта с GitHub
-local function loadMainScript()
-    local success, response = pcall(function()
+    
+    -- 1. Проверка резервных ключей
+    if CONFIG.VALID_KEYS[key] then
+        print("Резервный ключ принят")
+        return true
+    end
+    
+    -- 2. Проверка через сайт
+    local success, result = pcall(function()
         if not HttpService:IsHttpGetEnabled() then
             error("HTTP запросы отключены")
         end
-        return HttpService:GetAsync(MAIN_SCRIPT_URL, true)
+        
+        local response = HttpService:GetAsync(CONFIG.API_URL..key, true)
+        local data = HttpService:JSONDecode(response)
+        return data.valid == true
+    end)
+    
+    if not success then
+        warn("Ошибка проверки:", result)
+    end
+    
+    return success and result
+end
+
+-- Загрузка основного скрипта
+local function loadMainScript()
+    local success, script = pcall(function()
+        return HttpService:GetAsync(CONFIG.MAIN_SCRIPT_URL, true)
     end)
     
     if success then
-        local loadSuccess, err = pcall(loadstring, response)
+        local loadSuccess, err = pcall(loadstring, script)
         if loadSuccess then
             return true
         else
-            statusLabel.Text = "Ошибка загрузки скрипта"
-            warn("Ошибка загрузки:", err)
+            statusLabel.Text = "Ошибка загрузки!"
+            warn("Ошибка выполнения:", err)
         end
     else
-        statusLabel.Text = "Ошибка сети"
-        warn("Ошибка HTTP:", response)
+        statusLabel.Text = "Ошибка сети!"
+        warn("Не удалось загрузить:", script)
     end
     return false
 end
@@ -92,9 +129,8 @@ submitBtn.MouseButton1Click:Connect(function()
     submitBtn.Text = "ПРОВЕРКА..."
     statusLabel.Text = ""
     
-    local key = textBox.Text
-    if validateKey(key) then
-        statusLabel.Text = "Ключ принят!"
+    if validateKey(textBox.Text) then
+        statusLabel.Text = "Доступ разрешен!"
         statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
         
         task.wait(1)
@@ -112,13 +148,28 @@ submitBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Кнопка копирования ссылки
+local copyBtn = Instance.new("TextButton")
+copyBtn.Size = UDim2.new(0, 200, 0, 30)
+copyBtn.Position = UDim2.new(0.5, -100, 0.75, 0)
+copyBtn.Text = "СКОПИРОВАТЬ ССЫЛКУ"
+copyBtn.Parent = mainFrame
+
+copyBtn.MouseButton1Click:Connect(function()
+    pcall(function()
+        setclipboard(CONFIG.PROFILE_LINK)
+        statusLabel.Text = "Ссылка скопирована!"
+        task.wait(1.5)
+        statusLabel.Text = ""
+    end)
+end)
+
 -- Анимация появления
 mainFrame.Position = UDim2.new(0.5, -250, 0, -300)
 TweenService:Create(mainFrame, TweenInfo.new(1, Enum.EasingStyle.Bounce), {
     Position = UDim2.new(0.5, -250, 0.5, -150)
 }):Play()
 
--- Уведомление о готовности
 statusLabel.Text = "Система готова к работе"
 task.wait(2)
 statusLabel.Text = ""

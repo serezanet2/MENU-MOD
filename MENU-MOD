@@ -2,15 +2,33 @@ local player = game:GetService("Players").LocalPlayer
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
--- Конфигурация (без HTTP проверок)
+-- Конфигурация
 local VALID_KEYS = {
-    "GITMODER-1234",  -- Резервный ключ 1
-    "GIT-ACCESS-5678" -- Резервный ключ 2
+    ["GITMODER-1234"] = true,  -- Тестовый ключ
+    ["GIT-ACCESS-5678"] = true -- Основной ключ
 }
 
--- Оригинальный интерфейс (полностью сохранен)
+-- Основной скрипт (встроенный)
+local MAIN_SCRIPT = [[
+    print("Основной скрипт успешно загружен!")
+    -- Ваш основной код здесь
+    -- Пример:
+    local player = game:GetService("Players").LocalPlayer
+    
+    local function notify(msg)
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Gitmoder",
+            Text = msg,
+            Duration = 5
+        })
+    end
+    
+    notify("Система активирована!")
+]]
+
+-- Создаем интерфейс
 local gui = Instance.new("ScreenGui")
-gui.Name = "AuthGUI"
+gui.Name = "AuthGUI_"..tostring(math.random(1000,9999))
 gui.Parent = game:GetService("CoreGui")
 gui.DisplayOrder = 999999999
 gui.IgnoreGuiInset = true
@@ -18,165 +36,99 @@ gui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 500, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -250, 0, -350)
-mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
 mainFrame.Parent = gui
 
+-- Градиентный фон
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 80, 80))
 })
 gradient.Rotation = 90
 gradient.Parent = mainFrame
 
--- Все элементы оригинального интерфейса
-local menuText = Instance.new("TextLabel")
-menuText.Size = UDim2.new(0, 120, 0, 20)
-menuText.Position = UDim2.new(1, -130, 0, 10)
-menuText.Text = "Gitmoder"
-menuText.TextColor3 = Color3.fromRGB(200, 200, 200)
-menuText.TextXAlignment = Enum.TextXAlignment.Right
-menuText.BackgroundTransparency = 1
-menuText.Font = Enum.Font.GothamBold
-menuText.TextSize = 14
-menuText.Parent = mainFrame
+-- Текст заголовка
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -40, 0, 50)
+title.Position = UDim2.new(0, 20, 0.1, 0)
+title.Text = "GITMODER АКТИВАЦИЯ"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextScaled = true
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.Parent = mainFrame
 
-local creditText = Instance.new("TextLabel")
-creditText.Size = UDim2.new(0, 150, 0, 20)
-creditText.Position = UDim2.new(1, -160, 1, -30)
-creditText.Text = "By salli_system"
-creditText.TextColor3 = Color3.fromRGB(150, 150, 150)
-creditText.TextXAlignment = Enum.TextXAlignment.Right
-creditText.BackgroundTransparency = 1
-creditText.Font = Enum.Font.Gotham
-creditText.TextSize = 12
-creditText.Parent = mainFrame
-
-local passwordText = Instance.new("TextLabel")
-passwordText.Name = "PasswordText"
-passwordText.Size = UDim2.new(1, -40, 0, 50)
-passwordText.Position = UDim2.new(0, 20, 0.3, -25)
-passwordText.Text = "ВВЕДИТЕ КЛЮЧ ДОСТУПА"
-passwordText.TextColor3 = Color3.fromRGB(255, 255, 255)
-passwordText.TextXAlignment = Enum.TextXAlignment.Center
-passwordText.BackgroundTransparency = 1
-passwordText.Font = Enum.Font.GothamBold
-passwordText.TextSize = 18
-passwordText.Parent = mainFrame
-
+-- Поле ввода ключа
 local textBox = Instance.new("TextBox")
-textBox.Name = "KeyInput"
 textBox.Size = UDim2.new(0, 300, 0, 40)
-textBox.Position = UDim2.new(0.5, -150, 0.45, -20)
-textBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-textBox.PlaceholderText = "Введите ключ..."
-textBox.Font = Enum.Font.Gotham
-textBox.TextSize = 16
+textBox.Position = UDim2.new(0.5, -150, 0.4, -20)
+textBox.PlaceholderText = "Введите ключ доступа..."
 textBox.Text = ""
+textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 textBox.Parent = mainFrame
 
+-- Кнопка активации
 local submitBtn = Instance.new("TextButton")
-submitBtn.Name = "SubmitBtn"
-submitBtn.Size = UDim2.new(0, 140, 0, 35)
-submitBtn.Position = UDim2.new(0.3, -70, 0.65, 0)
-submitBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+submitBtn.Size = UDim2.new(0, 200, 0, 40)
+submitBtn.Position = UDim2.new(0.5, -100, 0.6, 0)
+submitBtn.Text = "АКТИВИРОВАТЬ"
 submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-submitBtn.Text = "ПОДТВЕРДИТЬ"
-submitBtn.Font = Enum.Font.GothamBold
-submitBtn.TextSize = 14
+submitBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 submitBtn.Parent = mainFrame
 
-local copyBtn = Instance.new("TextButton")
-copyBtn.Name = "CopyBtn"
-copyBtn.Size = UDim2.new(0, 140, 0, 35)
-copyBtn.Position = UDim2.new(0.7, -70, 0.65, 0)
-copyBtn.Text = "Скопировать GitUnlock"
-copyBtn.Font = Enum.Font.GothamBold
-copyBtn.TextSize = 12
-copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-copyBtn.BackgroundColor3 = Color3.fromRGB(40, 0, 60)
-copyBtn.Parent = mainFrame
+-- Статус
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -40, 0, 30)
+statusLabel.Position = UDim2.new(0, 20, 0.8, 0)
+statusLabel.Text = ""
+statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Parent = mainFrame
 
-local btnGradient = Instance.new("UIGradient")
-btnGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 0, 150)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 0, 100))
-})
-btnGradient.Rotation = 90
-btnGradient.Parent = copyBtn
-
-local statusText = Instance.new("TextLabel")
-statusText.Name = "StatusText"
-statusText.Size = UDim2.new(1, -40, 0, 30)
-statusText.Position = UDim2.new(0, 20, 0.85, 0)
-statusText.Text = ""
-statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
-statusText.TextXAlignment = Enum.TextXAlignment.Center
-statusText.BackgroundTransparency = 1
-statusText.Font = Enum.Font.Gotham
-statusText.TextSize = 14
-statusText.Parent = mainFrame
-
--- Локальная проверка ключа (без HTTP)
+-- Проверка ключа
 local function validateKey(key)
     key = string.gsub(tostring(key or ""), "%s+", "")
-    
-    -- Проверка резервных ключей
-    for _, validKey in pairs(VALID_KEYS) do
-        if key == validKey then
-            return true
-        end
-    end
-    
-    return false
+    return VALID_KEYS[key] == true
 end
 
--- Загрузка основного скрипта из RAW
+-- Загрузка основного скрипта
 local function loadMainScript()
-    local success, result = pcall(function()
-        -- Вставьте содержимое вашего основного скрипта здесь
-        -- ИЛИ используйте заранее подготовленный код:
-        local script = [[
-            print("Основной скрипт успешно загружен!")
-            -- Ваш основной код здесь
-        ]]
-        loadstring(script)()
-    end)
-    
+    local success, err = pcall(loadstring, MAIN_SCRIPT)
     if not success then
-        warn("Ошибка загрузки:", result)
+        statusLabel.Text = "Ошибка загрузки!"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        warn("Ошибка загрузки скрипта:", err)
+        return false
     end
+    return true
 end
 
--- Обработчики с защитой
+-- Обработчик кнопки
 submitBtn.MouseButton1Click:Connect(function()
     submitBtn.Text = "ПРОВЕРКА..."
+    statusLabel.Text = ""
     
-    if validateKey(textBox.Text) then
-        statusText.Text = "Ключ принят!"
-        statusText.TextColor3 = Color3.fromRGB(0, 255, 0)
+    local key = textBox.Text
+    if validateKey(key) then
+        statusLabel.Text = "Ключ принят!"
+        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
         
         task.wait(1)
-        loadMainScript()
-        gui:Destroy()
+        if loadMainScript() then
+            gui:Destroy()
+        end
     else
-        statusText.Text = "НЕВЕРНЫЙ КЛЮЧ!"
-        statusText.TextColor3 = Color3.fromRGB(255, 50, 50)
+        statusLabel.Text = "НЕВЕРНЫЙ КЛЮЧ!"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         task.wait(1.5)
-        statusText.Text = ""
-        submitBtn.Text = "ПОДТВЕРДИТЬ"
+        statusLabel.Text = ""
+        submitBtn.Text = "АКТИВИРОВАТЬ"
     end
-end)
-
-copyBtn.MouseButton1Click:Connect(function()
-    local originalText = copyBtn.Text
-    copyBtn.Text = "Скопировано!"
-    task.wait(1.5)
-    copyBtn.Text = originalText
 end)
 
 -- Анимация появления

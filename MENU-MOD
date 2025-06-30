@@ -2,119 +2,157 @@ local player = game:GetService("Players").LocalPlayer
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
--- Конфигурация (обновите URL при необходимости)
-local API_URL = "https://serezanet2.github.io/GitUnlock/Gitmoder/?check="
-local MAIN_SCRIPT_URL = "https://raw.githubusercontent.com/serezanet2/serezanet2-GIT-SALLI/main/script.lua"
-local PROFILE_LINK = "https://serezanet2.github.io/GitUnlock/"
+-- Конфигурация (проверьте URL перед использованием!)
+local CONFIG = {
+    API_URL = "https://serezanet2.github.io/GitUnlock/Gitmoder/?check=",
+    MAIN_SCRIPT = "https://raw.githubusercontent.com/serezanet2/serezanet2-GIT-SALLI/main/script.lua",
+    PROFILE_LINK = "https://serezanet2.github.io/GitUnlock/",
+    VALID_KEYS = {"TESTKEY123", "GITMODER2023"} -- Резервные ключи
+}
 
 -- Создаем интерфейс
 local gui = Instance.new("ScreenGui")
-gui.Name = "AuthGUI_"..tostring(math.random(1, 9999))
+gui.Name = "GitmoderAuth_"..tostring(math.random(1000,9999))
 gui.Parent = game:GetService("CoreGui")
 gui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 500, 0, 300)
 mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = gui
 
--- Остальные элементы интерфейса (как в оригинале) ...
+-- Градиентный фон
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 80, 80))
+})
+gradient.Rotation = 90
+gradient.Parent = mainFrame
 
--- Функция для отладки в F9
-local function debugLog(message)
-    print("[Gitmoder Debug]: "..tostring(message))
+-- Элементы интерфейса (оригинальный дизайн)
+local textBox = Instance.new("TextBox")
+textBox.Size = UDim2.new(0, 300, 0, 40)
+textBox.Position = UDim2.new(0.5, -150, 0.4, -20)
+textBox.PlaceholderText = "Введите ключ доступа..."
+textBox.Text = ""
+textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+textBox.Parent = mainFrame
+
+local submitBtn = Instance.new("TextButton")
+submitBtn.Size = UDim2.new(0, 200, 0, 40)
+submitBtn.Position = UDim2.new(0.5, -100, 0.6, 0)
+submitBtn.Text = "АКТИВИРОВАТЬ"
+submitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+submitBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+submitBtn.Parent = mainFrame
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -40, 0, 30)
+statusLabel.Position = UDim2.new(0, 20, 0.8, 0)
+statusLabel.Text = ""
+statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Parent = mainFrame
+
+-- Функция для отладки
+local function debug(message)
+    print("[Gitmoder] "..tostring(message))
+    statusLabel.Text = tostring(message)
 end
 
--- Улучшенная проверка ключа
+-- Проверка ключа (основная + резервная)
 local function validateKey(key)
-    -- Очистка ключа от пробелов
-    key = string.gsub(tostring(key), "%s+", "")
-    if #key < 5 then
-        debugLog("Ключ слишком короткий")
-        return false 
+    key = string.gsub(tostring(key or ""), "%s+", "")
+    if #key < 5 then return false end
+    
+    -- Проверка резервных ключей
+    for _, validKey in pairs(CONFIG.VALID_KEYS) do
+        if key == validKey then
+            debug("Резервный ключ принят")
+            return true
+        end
     end
     
-    debugLog("Проверяем ключ: "..key)
-    
+    -- Проверка через HTTP
     local success, result = pcall(function()
         if not HttpService:IsHttpGetEnabled() then
             error("HTTP запросы отключены")
         end
         
-        debugLog("Отправляем запрос на: "..API_URL..key)
-        local response = HttpService:GetAsync(API_URL..key, true)
-        debugLog("Получен ответ: "..tostring(response))
-        
+        debug("Отправка запроса...")
+        local response = HttpService:GetAsync(CONFIG.API_URL..key, true)
         local data = HttpService:JSONDecode(response)
-        debugLog("Данные проверки: "..tostring(data.valid))
-        
         return data.valid == true
     end)
     
     if not success then
-        debugLog("Ошибка проверки: "..tostring(result))
+        debug("Ошибка проверки: "..tostring(result))
     end
     
     return success and result
 end
 
--- Обработчик кнопки подтверждения
-submitBtn.MouseButton1Click:Connect(function()
-    debugLog("Нажата кнопка подтверждения")
+-- Загрузка основного скрипта
+local function loadMainScript()
+    local success, script = pcall(function()
+        return HttpService:GetAsync(CONFIG.MAIN_SCRIPT, true)
+    end)
     
-    submitBtn.Text = "ПРОВЕРКА..."
-    statusText.Text = ""
-    textBox:ReleaseFocus()
-    
-    local key = textBox.Text
-    debugLog("Введенный ключ: "..tostring(key))
-    
-    if validateKey(key) then
-        debugLog("Ключ действителен")
-        statusText.Text = "Успешная проверка!"
-        statusText.TextColor3 = Color3.fromRGB(0, 255, 0)
-        
-        -- Загрузка основного скрипта
-        local success, script = pcall(function()
-            return HttpService:GetAsync(MAIN_SCRIPT_URL, true)
-        end)
-        
-        if success then
-            debugLog("Скрипт получен, загружаем...")
-            local loadSuccess, err = pcall(loadstring, script)
-            if loadSuccess then
-                debugLog("Скрипт успешно загружен")
-                gui:Destroy()
-            else
-                debugLog("Ошибка загрузки: "..tostring(err))
-                statusText.Text = "Ошибка загрузки!"
-                statusText.TextColor3 = Color3.fromRGB(255, 0, 0)
-            end
+    if success then
+        local loadSuccess, err = pcall(loadstring, script)
+        if loadSuccess then
+            return true
         else
-            debugLog("Ошибка получения скрипта: "..tostring(script))
-            statusText.Text = "Ошибка сети!"
-            statusText.TextColor3 = Color3.fromRGB(255, 0, 0)
+            debug("Ошибка загрузки: "..tostring(err))
         end
     else
-        debugLog("Неверный ключ")
-        statusText.Text = "НЕВЕРНЫЙ КЛЮЧ!"
-        statusText.TextColor3 = Color3.fromRGB(255, 0, 0)
-        task.wait(1.5)
-        statusText.Text = ""
+        debug("Ошибка получения: "..tostring(script))
     end
-    
-    submitBtn.Text = "ПОДТВЕРДИТЬ"
-end)
-
--- Остальные обработчики и анимации ...
-
--- Проверка HTTP доступа
-if not HttpService:IsHttpGetEnabled() then
-    debugLog("Внимание: HTTP запросы отключены!")
-    statusText.Text = "Ошибка: HTTP отключены"
-    statusText.TextColor3 = Color3.fromRGB(255, 0, 0)
+    return false
 end
 
-debugLog("Интерфейс успешно создан")
+-- Обработчик кнопки
+submitBtn.MouseButton1Click:Connect(function()
+    submitBtn.Text = "ПРОВЕРКА..."
+    local key = textBox.Text
+    
+    if validateKey(key) then
+        debug("Ключ действителен, загружаем...")
+        if loadMainScript() then
+            gui:Destroy()
+            debug("Успешная активация!")
+        end
+    else
+        debug("Неверный ключ!")
+        task.wait(1.5)
+        statusLabel.Text = ""
+    end
+    
+    submitBtn.Text = "АКТИВИРОВАТЬ"
+end)
+
+-- Кнопка копирования ссылки
+local copyBtn = Instance.new("TextButton")
+copyBtn.Size = UDim2.new(0, 200, 0, 30)
+copyBtn.Position = UDim2.new(0.5, -100, 0.75, 0)
+copyBtn.Text = "СКОПИРОВАТЬ ССЫЛКУ"
+copyBtn.Parent = mainFrame
+
+copyBtn.MouseButton1Click:Connect(function()
+    pcall(function()
+        setclipboard(CONFIG.PROFILE_LINK)
+        debug("Ссылка скопирована!")
+    end)
+end)
+
+-- Анимация появления
+mainFrame.Position = UDim2.new(0.5, -250, 0, -300)
+TweenService:Create(mainFrame, TweenInfo.new(1, Enum.EasingStyle.Bounce), {
+    Position = UDim2.new(0.5, -250, 0.5, -150)
+}):Play()
+
+debug("Интерфейс готов к работе")
